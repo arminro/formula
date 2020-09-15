@@ -16,6 +16,8 @@ using Microsoft.IdentityModel.Tokens;
 using F1Web.DataAccess.Interfaces;
 using F1Web.Helpers;
 using F1Web.Security;
+using System.Data.Common;
+using Microsoft.Data.Sqlite;
 
 namespace F1Web
 {
@@ -42,17 +44,18 @@ namespace F1Web
                 options.Password.RequireNonAlphanumeric = false;
             });
 
-            services.AddEntityFrameworkSqlite()
-                .AddDbContext<FormulaDbContext>(options =>
+            services.AddDbContext<FormulaDbContext>(options =>
                 {
                     options.UseSqlite(InmemoryConnectionHolder.Connection);
                 }, ServiceLifetime.Singleton);
 
 
 
-            // DAOs with scoped lifetime to match lifetime of datacontext
-            services.AddScoped<IRepository<FormulaTeam>, TeamDao>();
-            services.AddScoped<IRepository<User>, UserDao>();
+
+            // DAOs would use scoped lifetime to match lifetime of datacontext
+            // but due to the in-memo singleton, they have to be singleton themselves too
+            services.AddSingleton<IRepository<FormulaTeam>, TeamDao>();
+            services.AddSingleton<IRepository<User>, UserDao>();
 
             // binding appsettings
             var appSettingsSection = Configuration.GetSection("AppSettings");
@@ -126,10 +129,12 @@ namespace F1Web
             services.AddCors(c =>
             {
                 c.AddPolicy("Cors", options => {
-                    //options.WithOrigins(["CLIENT_ADDRESS"])
-                    options.AllowAnyOrigin();
-                    options.AllowAnyMethod();
-                    options.AllowAnyHeader();
+                    //options.WithOrigins("https://localhost:4200");
+                    options
+                        .AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+
                 } );
                });
 
@@ -154,11 +159,10 @@ namespace F1Web
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
-            app.UseAuthorization();
+            
             app.UseCors("Cors");
-            
 
-            
+            app.UseAuthorization();
 
             app.UseEndpoints(endpts =>
             {
@@ -166,5 +170,6 @@ namespace F1Web
             });
             
         }
+
     }
 }

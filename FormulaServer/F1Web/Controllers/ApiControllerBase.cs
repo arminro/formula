@@ -48,10 +48,10 @@ namespace F1Web.Controllers
                 var result = await _repository.GetElementsAsync();
                 return Ok(result);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not retrieve list of ${nameof(TEntity)}");
+                    $"Could not retrieve list of entity");
             }
         }
 
@@ -145,7 +145,7 @@ namespace F1Web.Controllers
 
         // DELETE api/[entities]/5555-5555-5555
         [HttpDelete("{id}")]
-        public virtual async Task<ActionResult> Delete(Guid id, [FromBody] Guid ownerId)
+        public virtual async Task<ActionResult> Delete(Guid id)
         {
             try
             {
@@ -165,7 +165,7 @@ namespace F1Web.Controllers
 
                 return Unauthorized();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     $"Could not delete element");
