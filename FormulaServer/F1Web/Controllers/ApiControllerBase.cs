@@ -41,6 +41,7 @@ namespace F1Web.Controllers
         /// <returns>A collection of entities or an empty collection.</returns>
         // GET api/[entities]
         [HttpGet]
+        [AllowAnonymous]
         public virtual async Task<ActionResult<IEnumerable<TEntity>>> Get()
         {
             try
@@ -48,8 +49,10 @@ namespace F1Web.Controllers
                 var result = await _repository.GetElementsAsync();
                 return Ok(result);
             }
-            catch (Exception e)
+            catch
             {
+                // letting the app crash in case of unknown errors would be the good solution
+                // I wanted to show that the UI counterpart of the app can actually display the error
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     $"Could not retrieve list of entity");
             }
@@ -124,7 +127,7 @@ namespace F1Web.Controllers
         {
             try
             {
-                if (User.Identity.IsAuthenticated)
+                if (IsUserLoggedIn())
                 {
                     if (ModelState.IsValid)
                     {
@@ -136,7 +139,7 @@ namespace F1Web.Controllers
 
                 return Unauthorized();
             }
-            catch (Exception)
+            catch 
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     $"Could not update element ${value.GetType().Name}");
@@ -149,7 +152,7 @@ namespace F1Web.Controllers
         {
             try
             {
-                if (User.Identity.IsAuthenticated)
+                if (IsUserLoggedIn())
                 {
                     var entity = await _repository.GetElementAsync(id);
                     if (entity == null)

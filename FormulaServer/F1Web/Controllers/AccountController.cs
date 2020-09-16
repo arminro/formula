@@ -11,6 +11,7 @@ using F1Web.ViewModels;
 
 namespace F1Web.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
     [EnableCors("Cors")]
@@ -29,8 +30,7 @@ namespace F1Web.Controllers
         }
 
 
-        [HttpPost]
-        [Route("api/[controller]/login")]
+        [HttpPost("login")]
         [AllowAnonymous]        
         public async Task<IActionResult> Login([FromBody] LoginViewModel viewModel)
         {
@@ -72,7 +72,7 @@ namespace F1Web.Controllers
                 await _signInManager.SignOutAsync();
                 return Ok();
             }
-            catch
+            catch(Exception e)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     $"Unexpected error during logging out");

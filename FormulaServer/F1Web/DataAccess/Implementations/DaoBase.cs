@@ -68,9 +68,13 @@ namespace F1Web.DataAccess.Implementations
             
             if (element != null)
             {
+                // either this or AsNoTracking() would work in real-life scenarios
                 //_context.Entry(element).State = EntityState.Detached;
-                _context.Update(updatee);
-                
+                //_context.Update(updatee);
+
+                this.ExchangeProperties(element, updatee);
+                //_context.Entry(element).State = EntityState.Modified;
+
                 await _context.SaveChangesAsync();
             }
             else
@@ -81,12 +85,31 @@ namespace F1Web.DataAccess.Implementations
 
         private async Task<T> EntryFinderAsync(Guid id)
         {
-            return (T)await _context.Set<T>().FindAsync(id);
+            return (T)await _context.Set<T>()
+                //.AsNoTracking()
+                .FirstOrDefaultAsync(en => en.Id == id);
         }
 
         public void Dispose()
         {
             _context.Dispose();
+        }
+
+        private void ExchangeProperties(T oldEntity, T newEntity)
+        {
+            /* Neither using AsNoTracking() nor manually detaching the entity prevented EF to keep track of the data
+             probably due to the dbcontext and the sqlite connection being retained in the memory.
+            In real life scenarios, you would rather have a persitant db or use inmemory SqlLite in an inline using
+            during tests, which both would work. In this scenario, only adding the values one by one utilizing EF tracking
+            worked.*/
+
+            foreach (var prop in oldEntity.GetType().GetProperties())
+            {
+                var newValue = newEntity.GetType()
+                    .GetProperty(prop.Name)
+                    .GetValue(newEntity);
+                prop.SetValue(oldEntity, newValue);
+            }
         }
     }
 }
