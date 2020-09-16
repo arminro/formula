@@ -1,0 +1,11 @@
+{
+    "env": {
+    "name": "DEV"
+     },
+    "apiServer": {
+      "baseUrl": "https://localhost:5001/api",
+      "mainSegment" : "teams",
+      "loginSegment" : "account/login",
+      "logoutSegment" : "account/logout"
+    }
+}

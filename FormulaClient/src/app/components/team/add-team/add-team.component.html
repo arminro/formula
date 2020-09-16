@@ -1,0 +1,59 @@
+<html>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<div class="wrapper fadeInDown">
+  <div id="formContent">
+      <div class="jumbotron">
+          <h2 class="display-1">Add new team</h2>
+        </div>
+
+        <div class="container">
+          <div class="row">
+            <input type="text" id="name" class="fadeIn third" name="name" placeholder="name" [(ngModel)]="this.teamToAdd.name">
+          </div>
+          <div class="row">
+
+            <div class="col-sm-6">
+                <label for="numberOfChampionshipsWon">Foundation Year</label>
+            </div>
+            <div class="col-sm-6">
+              <input type="number" id="numberOfChampionshipsWon"  name="numberOfChampionshipsWon"
+                        [(ngModel)]="this.teamToAdd.yearOfFoundation">
+            </div>
+          </div>
+          <div class="row">
+              <div class="col-sm-6">
+                <label for="numberOfChampionshipsWon">Championships Won</label>
+              </div>
+              <div class="col-sm-6">
+                <input type="number" id="numberOfChampionshipsWon"  name="numberOfChampionshipsWon"
+                  [(ngModel)]="this.teamToAdd.numberOfChampionshipsWon">
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-sm-6">
+                <label for="entryfeePaid">Entry fee paid</label>
+              </div>
+              <div class="col-sm-6">
+                <input type="checkbox" id="entryfeePaid" class="megabox"  name="entryfeePaid" [(ngModel)]="this.teamToAdd.entryfeePaid">
+              </div>
+          </div>
+          <div class="d-flex align-items-center">
+            <div class="p-3 flex-fill">
+              <input type="submit" value="Create" (click)="onSubmit()">
+            </div>
+            <div class="p-3 flex-fill">
+              <input type="submit" value="Cancel" (click)="onCancel()">
+            </div>
+          </div>
+
+
+
+      </div>
+  </div>
+  </div>
+</html>
+
