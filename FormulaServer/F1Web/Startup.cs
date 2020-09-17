@@ -16,8 +16,9 @@ using Microsoft.IdentityModel.Tokens;
 using F1Web.DataAccess.Interfaces;
 using F1Web.Helpers;
 using F1Web.Security;
-using System.Data.Common;
-using Microsoft.Data.Sqlite;
+using F1Web.Service.Inerfaces;
+using F1Web.Service.Implementations;
+using F1Web.Extensions;
 
 namespace F1Web
 {
@@ -49,13 +50,14 @@ namespace F1Web
                     options.UseSqlite(InmemoryConnectionHolder.Connection);
                 }, ServiceLifetime.Singleton);
 
-
-
-
             // DAOs would use scoped lifetime to match lifetime of datacontext
             // but due to the in-memo singleton, they have to be singleton themselves too
             services.AddSingleton<IRepository<FormulaTeam>, TeamDao>();
-            services.AddSingleton<IRepository<User>, UserDao>();
+
+            // adding services
+            services.AddSingleton<IFormulaService<FormulaTeam>, FormulaTeamService>();
+            // login and logout is based on sessions
+            services.AddScoped<IAuthenticationService<User>, IdentityAuthenticationService<User, Guid>>();
 
             // binding appsettings
             var appSettingsSection = Configuration.GetSection("AppSettings");
@@ -134,7 +136,6 @@ namespace F1Web
                         .AllowAnyOrigin()
                         .AllowAnyMethod()
                         .AllowAnyHeader();
-
                 } );
                });
 
@@ -155,7 +156,8 @@ namespace F1Web
             {
                 app.UseHsts();
             }
-         
+
+            app.ConfigureExceptionHandler();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using F1Web.Security;
 using F1Web.ViewModels;
+using F1Web.Service.Inerfaces;
+using F1Web.Service.Implementations;
 
 namespace F1Web.Controllers
 {
@@ -17,71 +19,45 @@ namespace F1Web.Controllers
     [EnableCors("Cors")]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
-        private readonly ITokenService _tokenService;
 
-        public AccountController(UserManager<User> userManager,
-            SignInManager<User> signInManager, ITokenService tokenService)
+        private readonly ITokenService _tokenService;
+        private readonly IAuthenticationService<User> _authService;
+
+        public AccountController(IAuthenticationService<User> authService, ITokenService tokenService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
             _tokenService = tokenService;
+            _authService = authService;
         }
 
 
         [HttpPost("login")]
         [AllowAnonymous]        
-        public async Task<IActionResult> Login([FromBody] LoginViewModel viewModel)
+        public async Task<IActionResult> Login([FromBody] LoginDto loginObject)
         {
-            try
+            if (ModelState.IsValid)
             {
-                if (ModelState.IsValid)
+                var result = await _authService.AttemptLoginAsync(loginObject);
+                if (result.Result == AuthResults.Success)
                 {
-                    var userInDb = await _userManager.FindByNameAsync(viewModel.Username);
-                    if (userInDb == null)
-                    {
-                        return NotFound($"The user with the username {viewModel.Username.ToUpper()} is not registered");
-                    }
-
-                    var signInResult = await _signInManager
-                        .PasswordSignInAsync(viewModel.Username, viewModel.Password, false, false);
-                   
-                    if (signInResult.Succeeded)
-                    {
-                        return Ok(CreateLoggedInUserResponse(userInDb, _tokenService.GenerateToken(userInDb.Id)));
-                    }
-
-                    // for security reasons, this is bad practice, but it shows how many ways the app can respond
-                    return Unauthorized($"Incorrect password for user {viewModel.Username.ToUpper()}");
+                    return Ok(CreateLoggedInUserResponse(result.User, _tokenService.GenerateToken(result.User.Id)));
                 }
-                return BadRequest(ModelState);
+
+                // for security reasons, this is bad practice, but it shows how many ways the app can respond
+                return Unauthorized($"Incorrect password for user {loginObject.Username.ToUpper()}");
             }
-            catch
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                        $"Unexpected error during login of user {viewModel.Username}");
-            }
+            return BadRequest(ModelState);
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            try
-            {
-                await _signInManager.SignOutAsync();
-                return Ok();
-            }
-            catch(Exception e)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Unexpected error during logging out");
-            }
+            var result = await _authService.AttemptLogoutAsync();
+            return Ok(result);
         }
 
-        private UserViewModel CreateLoggedInUserResponse(User user, string token)
+        private UserDto CreateLoggedInUserResponse(User user, string token)
         {
-            return new UserViewModel()
+            return new UserDto()
             {
                 Id = user.Id,
                 Name = user.UserName,

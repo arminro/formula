@@ -27,6 +27,11 @@ namespace F1Web.DataAccess.Implementations
             _context = context;
         }
 
+        /// <summary>
+        /// Creates an entry asynchronously
+        /// </summary>
+        /// <param name="newEntry">The netry to be created</param>
+        /// <returns>A task representing the operation.</returns>
         public async Task CreateAsync(T newEntry)
         {
             if (await EntryFinderAsync(newEntry.Id) != null)
@@ -38,6 +43,11 @@ namespace F1Web.DataAccess.Implementations
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Deletes an element asynchronously
+        /// </summary>
+        /// <param name="deletee">The element to be deleted</param>
+        /// <returns>A task representing the operation.</returns>
         public async Task DeleteAsync(T deletee)
         {
             T element = await EntryFinderAsync(deletee.Id);
@@ -52,16 +62,30 @@ namespace F1Web.DataAccess.Implementations
             }
         }
 
+        /// <summary>
+        /// Retrieves the elements asynchronously.
+        /// </summary>
+        /// <param name="id">The id of the element</param>
+        /// <returns>A Task with the element wrapped inside if found, null otherwise.</returns>
         public async Task<T> GetElementAsync(Guid id)
         {
             return await _context.Set<T>().FindAsync(id);
         }
 
+        /// <summary>
+        /// Retrieves a list of elements asynchronously.
+        /// </summary>
+        /// <returns>The list if there are any elements present, an empty enumerable otherwise.</returns>
         public async Task<IEnumerable<T>> GetElementsAsync()
         {
             return await _context.Set<T>().ToListAsync();
         }
 
+        /// <summary>
+        /// Updates an element asynchronously.
+        /// </summary>
+        /// <param name="updatee">The element to be udpated.</param>
+        /// <returns>A task representing the operation.</returns>
         public async Task UpdateAsync(T updatee)
         {
             T element = await EntryFinderAsync(updatee.Id);

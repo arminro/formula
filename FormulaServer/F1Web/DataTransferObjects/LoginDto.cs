@@ -5,7 +5,7 @@ namespace F1Web.ViewModels
     /// <summary>
     /// VM storing information for logins.
     /// </summary>
-    public class LoginViewModel
+    public class LoginDto
     {
         /// <summary>
         /// Username.

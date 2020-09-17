@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using F1.Data.Models;
+using F1Web.Service.Inerfaces;
 
 namespace F1Web.Controllers
 {
@@ -24,13 +25,13 @@ namespace F1Web.Controllers
     public class ApiControllerBase<TEntity> : ControllerBase
         where TEntity : class, IDbEntry
     {
-        protected readonly IRepository<TEntity> _repository;
+        protected readonly IFormulaService<TEntity> _service;
         protected readonly UserManager<User> _userManager;
         protected readonly SignInManager<User> _signInManager;
 
-        public ApiControllerBase(IRepository<TEntity> repository, UserManager<User> userManager, SignInManager<User> signInManager)
+        public ApiControllerBase(IFormulaService<TEntity> service, UserManager<User> userManager, SignInManager<User> signInManager)
         {
-            _repository = repository;
+            _service = service;
             _userManager = userManager;
             _signInManager = signInManager;
         }
@@ -44,18 +45,8 @@ namespace F1Web.Controllers
         [AllowAnonymous]
         public virtual async Task<ActionResult<IEnumerable<TEntity>>> Get()
         {
-            try
-            {
-                var result = await _repository.GetElementsAsync();
-                return Ok(result);
-            }
-            catch
-            {
-                // letting the app crash in case of unknown errors would be the good solution
-                // I wanted to show that the UI counterpart of the app can actually display the error
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not retrieve list of entity");
-            }
+            var result = await _service.GetElementsAsync();
+            return Ok(result);
         }
 
         /// <summary>
@@ -67,22 +58,14 @@ namespace F1Web.Controllers
         [HttpGet("{id}")]
         public virtual async Task<ActionResult<TEntity>> Get(Guid elementId)
         {
-            try
+            var entity = await _service.GetElementAsync(elementId);
+            if (entity == null)
             {
-                var entity = await _repository.GetElementAsync(elementId);
-                if (entity == null)
-                {
-                    return NotFound("The requested element is not available.");
-                }
-                else
-                {
-                    return Ok(entity);
-                }
+                return NotFound("The requested element is not available.");
             }
-            catch (Exception)
+            else
             {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not retrieve the element");
+                return Ok(entity);
             }
         }
 
@@ -95,21 +78,13 @@ namespace F1Web.Controllers
         [HttpPost]
         public virtual async Task<ActionResult> Post([FromBody] TEntity value)
         {
-            try
+            if (IsUserLoggedIn())
             {
-                if (IsUserLoggedIn())
-                {
-                    await _repository.CreateAsync(value);
-                    return Accepted(); // usually, Created() is used, but my repo does not return anything 
-                }
+                await _service.CreateAsync(value);
+                return Accepted(); // usually, Created() is used, but my repo does not return anything 
+            }
 
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not create element ${value.GetType().Name}");
-            }
+            return Unauthorized();
         }
 
         private bool IsUserLoggedIn()
@@ -125,59 +100,38 @@ namespace F1Web.Controllers
         [HttpPut]
         public virtual async Task<ActionResult> Put([FromBody] TEntity value)
         {
-            try
+            if (IsUserLoggedIn())
             {
-                if (IsUserLoggedIn())
+                if (ModelState.IsValid)
                 {
-                    if (ModelState.IsValid)
-                    {
-                        await _repository.UpdateAsync(value);
-                        return Accepted();
-                    }
-                    return BadRequest(ModelState); 
+                    await _service.UpdateAsync(value);
+                    return Accepted();
                 }
+                return BadRequest(ModelState);
+            }
 
-                return Unauthorized();
-            }
-            catch 
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not update element ${value.GetType().Name}");
-            }
+            return Unauthorized();
         }
 
         // DELETE api/[entities]/5555-5555-5555
         [HttpDelete("{id}")]
         public virtual async Task<ActionResult> Delete(Guid id)
         {
-            try
+            if (IsUserLoggedIn())
             {
-                if (IsUserLoggedIn())
+                var entity = await _service.GetElementAsync(id);
+                if (entity == null)
                 {
-                    var entity = await _repository.GetElementAsync(id);
-                    if (entity == null)
-                    {
-                        return NotFound("The user to be deleted is not found in the databse");
-                    }
-                    else
-                    {
-                        await _repository.DeleteAsync(entity);
-                        return Ok(entity);
-                    } 
+                    return NotFound("The user to be deleted is not found in the databse");
                 }
-
-                return Unauthorized();
+                else
+                {
+                    await _service.DeleteAsync(entity);
+                    return Ok(entity);
+                }
             }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    $"Could not delete element");
-            }
-        }
 
-        private Guid GetUserIdFromJWT()
-        {
-            return Guid.Parse(User.Claims.FirstOrDefault(e => e.Type == "aud").Value);
+            return Unauthorized();
         }
     }
 }

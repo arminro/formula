@@ -5,7 +5,7 @@ namespace F1Web.ViewModels
     /// <summary>
     /// The VM for the user
     /// </summary>
-    public class UserViewModel
+    public class UserDto
     {
         /// <summary>
         /// The VM id.
