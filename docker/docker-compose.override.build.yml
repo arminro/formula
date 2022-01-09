@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+
+  formula.api:
+    build:
+      context: ../FormulaServer
+      dockerfile: Dockerfile
+      
+  # formula.ui:
+  #   build:
+  #     context: ../FormulaClient
+  #     dockerfile: node-app/Dockerfile
+      
+  

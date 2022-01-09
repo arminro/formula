@@ -35,6 +35,8 @@ namespace F1Web
         {
             services.AddControllers();
 
+       
+
             // adding identity and making sure the password can be used
             services.AddIdentity<User, UserRole>()
                 .AddEntityFrameworkStores<FormulaDbContext>();
@@ -46,16 +48,16 @@ namespace F1Web
             });
 
             services.AddDbContext<FormulaDbContext>(options =>
-                {
-                    options.UseSqlite(InmemoryConnectionHolder.Connection);
-                }, ServiceLifetime.Singleton);
+            {
+                options.UseSqlServer(Configuration.GetSection("ConnectionString").Value);
+            });
 
             // DAOs would use scoped lifetime to match lifetime of datacontext
             // but due to the in-memo singleton, they have to be singleton themselves too
-            services.AddSingleton<IRepository<FormulaTeam>, TeamDao>();
+            services.AddScoped<IRepository<FormulaTeam>, TeamDao>();
 
             // adding services
-            services.AddSingleton<IFormulaService<FormulaTeam>, FormulaTeamService>();
+            services.AddScoped<IFormulaService<FormulaTeam>, FormulaTeamService>();
             // login and logout is based on sessions
             services.AddScoped<IAuthenticationService<User>, IdentityAuthenticationService<User, Guid>>();
 
@@ -72,58 +74,58 @@ namespace F1Web
             services.AddAuthentication(opts =>
             {
                 // identity authentication options
-                //opts.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-                //opts.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-                //opts.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+                opts.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+                opts.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+                opts.DefaultSignInScheme = IdentityConstants.ExternalScheme;
 
                 // jwt authentication options
-                opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                opts.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                opts.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-             // jwt authentication config
-            .AddJwtBearer(opts =>
-            {
-                opts.RequireHttpsMetadata = false;
-                opts.SaveToken = true;
-                opts.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                };
+                //opts.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                //opts.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                //opts.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             });
+             // jwt authentication config
+            //.AddJwtBearer(opts =>
+            //{
+            //    opts.RequireHttpsMetadata = false;
+            //    opts.SaveToken = true;
+            //    opts.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuerSigningKey = true,
+            //        IssuerSigningKey = new SymmetricSecurityKey(key),
+            //        ValidateIssuer = false,
+            //        ValidateAudience = false,
+            //        ValidateLifetime = true,
+            //    };
+            //});
 
             // identity authentication config
             //based on: https://docs.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-3.1&tabs=visual-studio
-            //services.Configure<IdentityOptions>(options =>
-            //{
-            //    // Password settings.
-            //    options.Password.RequireUppercase = false;
-            //    options.Password.RequireNonAlphanumeric = false;
-            //
-            //    // Lockout settings.
-            //    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-            //    options.Lockout.MaxFailedAccessAttempts = 5;
-            //    options.Lockout.AllowedForNewUsers = true;
-            //
-            //    // User settings.
-            //    options.User.AllowedUserNameCharacters =
-            //    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-            //    options.User.RequireUniqueEmail = false;
-            //});
-            //
-            //services.ConfigureApplicationCookie(options =>
-            //{
-            //    // Cookie settings
-            //    options.Cookie.HttpOnly = true;
-            //    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
-            //
-            //    options.LoginPath = "/Account/Login";
-            //    options.SlidingExpiration = true;
-            //});
+            services.Configure<IdentityOptions>(options =>
+            {
+                // Password settings.
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+
+                // Lockout settings.
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+
+                // User settings.
+                options.User.AllowedUserNameCharacters =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                options.User.RequireUniqueEmail = false;
+            });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                // Cookie settings
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+                options.LoginPath = "/Account/Login";
+                options.SlidingExpiration = true;
+            });
 
             // normally, if clients are hosted in a different domain, 
             // only registered clients can reach the server, while users can interact with the client
@@ -141,8 +143,6 @@ namespace F1Web
 
             services.AddSingleton<ITokenService, JWTProvider>();
 
-            // we have to wait for the task to complete, this blocks the UI!
-            DbHelper.SetupTestDb(services.BuildServiceProvider(), appSettings).Wait();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

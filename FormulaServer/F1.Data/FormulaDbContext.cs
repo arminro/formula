@@ -15,13 +15,6 @@ namespace F1.Data
        /// </summary>
         public DbSet<FormulaTeam> Teams { get; set; }
 
-         /// <summary>
-        /// Default constructor for the data context.
-        /// </summary>
-        public FormulaDbContext()
-        {
-        }
-
         /// <summary>
         /// Parametered constructor for the data context.
         /// </summary>
@@ -29,7 +22,6 @@ namespace F1.Data
         public FormulaDbContext(DbContextOptions<FormulaDbContext> opts) 
             : base(opts)
         {
-            this.Database.EnsureCreated();
         }
     }
 }

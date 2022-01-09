@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+
+  formula.db:
+    # image: mcr.microsoft.com/mssql/server:2017-latest
+    build:
+      context: ../FormulaDb
+      dockerfile: Dockerfile
+    container_name: formula.db
+    environment:
+      - SA_PASSWORD=Password123
+      - ACCEPT_EULA=Y
+    ports:
+      - "31433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      # - ./db:/docker-entrypoint-initdb.d
+    networks:
+      - formula-network
+
+  formula.api:
+    build:
+      context: ../FormulaServer
+      dockerfile: Dockerfile
+    container_name: formula.api
+    environment:
+      - ConnectionString=Server=Formula.db,1433;Database=FormulaDb;User Id=sa;Password=Password123;
+    ports:
+      - "8083:80"
+    networks:
+      - formula-network
+
+  formula.ui:
+    build:
+      context: ../FormulaClient
+      dockerfile: node-app/Dockerfile
+    # image: formula.ui:dev-latest
+    container_name: formula.ui
+    environment:
+      - API_BASE_URL=http://localhost:8083
+    ports:
+      - "8080:80"
+    networks:
+      - formula-network
+
+
+volumes:
+  mssql-data:
+
+networks:
+  formula-network:

@@ -9,7 +9,7 @@ import { AuthService } from 'src/app/services/auth.service';
 export class AppComponent {
   title = 'FormulaTeams';
 
-  constructor(private authSrv: AuthService) {
+  constructor(public authSrv: AuthService) {
 
   }
 

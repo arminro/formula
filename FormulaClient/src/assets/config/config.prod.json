@@ -1,0 +1,11 @@
+{
+  "env": {
+  "name": "PROD"
+   },
+  "apiServer": {
+    "baseUrl": "http://localhost:8083/api",
+    "mainSegment" : "teams",
+    "loginSegment" : "account/login",
+    "logoutSegment" : "account/logout"
+  }
+}
